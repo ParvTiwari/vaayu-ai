@@ -1,0 +1,25 @@
+# Environment
+.env
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Data (keep folder structure, ignore contents)
+data/db/*
+!data/db/.gitkeep
+!data/db/raw_cache/
+data/db/raw_cache/*
+
+# Models (keep folder structure, ignore trained artifacts)
+models/checkpoints/*
+!models/checkpoints/.gitkeep
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
