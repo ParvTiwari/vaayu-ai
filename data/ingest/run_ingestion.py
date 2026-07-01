@@ -21,6 +21,13 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from dotenv import load_dotenv  # noqa: E402
+
+# Load .env from the project root before anything reads os.getenv() —
+# without this, CPCB_API_KEY/OPENAQ_API_KEY/etc. are never actually visible
+# to the process even if they're set in .env.
+load_dotenv(ROOT / ".env")
+
 from data.ingest.cpcb_openaq import CITY_CONFIG, fetch_historical_aqi  # noqa: E402
 from data.ingest.weather import fetch_historical_weather  # noqa: E402
 
