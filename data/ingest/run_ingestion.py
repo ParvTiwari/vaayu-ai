@@ -45,6 +45,12 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name
 logger = logging.getLogger(__name__)
 
 CITIES = list(CITY_CONFIG.keys())
+# Optionally restrict to a subset, e.g. VAAYU_CITIES="Delhi" or "Delhi,Indore",
+# useful when only some cities' AQI is cached/available (OpenAQ backfill is slow).
+_cities_env = os.getenv("VAAYU_CITIES", "").strip()
+if _cities_env:
+    _requested = [c.strip() for c in _cities_env.split(",") if c.strip()]
+    CITIES = [c for c in _requested if c in CITY_CONFIG]
 # ~18 months by default. Overridable with VAAYU_HISTORY_DAYS because OpenAQ v3's
 # deep pagination is unreliable over long windows (later pages 408-timeout), so
 # a full 18-month backfill across all of Delhi's sensors can run for hours; a

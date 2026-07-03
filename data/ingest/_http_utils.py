@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
 import time
 from pathlib import Path
 from typing import Any, Callable
@@ -20,6 +21,10 @@ from typing import Any, Callable
 import requests
 
 logger = logging.getLogger(__name__)
+
+
+class CacheMiss(RuntimeError):
+    """Raised on a cache miss when VAAYU_CACHE_ONLY is set (offline mode)."""
 
 CACHE_DIR = Path(__file__).resolve().parent.parent / "db" / "raw_cache"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -64,6 +69,13 @@ def _cached_request(
     if cache_file.exists():
         logger.info(f"[cache hit] {prefix} -> {cache_file.name}")
         return parse(cache_file.read_text(encoding="utf-8"))
+
+    # Offline / cache-only mode: never hit the network. Lets us rebuild a
+    # dataset instantly from whatever a previous run already cached (e.g. when
+    # an upstream API is slow/flaky). Callers that paginate treat this like a
+    # normal fetch failure and stop cleanly.
+    if os.getenv("VAAYU_CACHE_ONLY", "").strip():
+        raise CacheMiss(f"cache-only mode: no cached response for {prefix}")
 
     last_exc: Exception | None = None
     retry_after: float | None = None  # seconds the server asked us to wait
@@ -161,4 +173,4 @@ def cached_post_json(
     )
 
 
-__all__ = ["cached_json_get", "cached_text_get", "cached_post_json", "cache_key_for", "CACHE_DIR"]
+__all__ = ["cached_json_get", "cached_text_get", "cached_post_json", "cache_key_for", "CACHE_DIR", "CacheMiss"]
