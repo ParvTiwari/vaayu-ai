@@ -20,6 +20,7 @@ from agents.attribution_agent import (
     score_industrial,
     score_traffic,
 )
+from agents.enforcement_agent import aqi_severity, rank_zones, vulnerability_from_pois
 
 
 def test_project_scaffold_sanity():
@@ -161,3 +162,55 @@ def test_idw_midpoint_is_between_and_weighted():
     # Closer to the high station → pulled above the mean.
     near_high = idw_interpolate(np.array([28.78]), np.array([77.1]), s_lat, s_lon, s_aqi)[0]
     assert near_high > 200.0
+
+
+# --- enforcement scoring -----------------------------------------------------
+
+
+def test_aqi_severity_breakpoints():
+    # good=1, satisfactory=2, moderate=3, poor=4, very_poor=5, severe=6
+    assert aqi_severity(30) == 1
+    assert aqi_severity(80) == 2
+    assert aqi_severity(150) == 3
+    assert aqi_severity(250) == 4
+    assert aqi_severity(350) == 5
+    assert aqi_severity(450) == 6
+    assert aqi_severity(999) == 6      # above top breakpoint → severe
+    assert aqi_severity(None) == 0     # unknown → excluded upstream
+
+
+def test_vulnerability_weights_are_explicit():
+    # 1 hospital(3) + 2 schools(2) + generic density 0.5(×1) = 3 + 4 + 0.5 = 7.5
+    v = vulnerability_from_pois({"hospital": 1, "school": 2}, norm_density=0.5)
+    assert v == 7.5
+    # elderly_care weighted like hospitals (3); unknown categories ignored.
+    assert vulnerability_from_pois({"elderly_care": 2, "park": 9}) == 6.0
+
+
+def test_enforcement_ranking_matches_hand_calculation():
+    """Two synthetic zones with hand-calculable priority_scores and a known order."""
+    # Zone A: risk 4, vuln 10 → raw 40 (the worst → 100).
+    # Zone B: risk 6, vuln 5  → raw 30 → 100*30/40 = 75.0.
+    zones = [
+        {"station_id": "A", "risk_score": 4, "vulnerability_score": 10.0},
+        {"station_id": "B", "risk_score": 6, "vulnerability_score": 5.0},
+    ]
+    ranked = rank_zones(zones)
+    assert [z["station_id"] for z in ranked] == ["A", "B"]     # descending by priority
+    assert ranked[0]["priority_score"] == 100.0
+    assert ranked[1]["priority_score"] == 75.0
+
+
+def test_enforcement_ranking_is_stable_and_deterministic():
+    """Equal priority scores break ties deterministically (risk, then vuln, then id)."""
+    zones = [
+        {"station_id": "z2", "risk_score": 3, "vulnerability_score": 4.0},   # raw 12
+        {"station_id": "z1", "risk_score": 2, "vulnerability_score": 6.0},   # raw 12 (tie)
+        {"station_id": "z3", "risk_score": 6, "vulnerability_score": 4.0},   # raw 24 (top)
+    ]
+    ranked = rank_zones(zones)
+    assert [z["station_id"] for z in ranked] == ["z3", "z2", "z1"]  # z2 wins tie on higher risk
+    assert ranked[0]["priority_score"] == 100.0
+    assert ranked[1]["priority_score"] == ranked[2]["priority_score"] == 50.0
+    # Re-running yields an identical order (no randomness).
+    assert [z["station_id"] for z in rank_zones(list(reversed(zones)))] == ["z3", "z2", "z1"]

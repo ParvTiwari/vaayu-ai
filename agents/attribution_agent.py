@@ -145,6 +145,7 @@ def load_city_layers(city: str) -> dict:
     path = LAYERS_DIR / f"{city}_layers.geojson"
     road_cells: list[dict] = []
     industrial: list[dict] = []
+    pois: list[dict] = []
     if path.exists():
         gj = json.loads(path.read_text(encoding="utf-8"))
         for ft in gj.get("features", []):
@@ -171,12 +172,23 @@ def load_city_layers(city: str) -> dict:
                         "area_km2": ft["properties"].get("area_km2"),
                     }
                 )
+            elif layer == "vulnerability_pois" and geom.get("type") == "Point":
+                lon_c, lat_c = geom["coordinates"]
+                pois.append(
+                    {
+                        "category": ft["properties"].get("category"),
+                        "name": ft["properties"].get("name"),
+                        "lat": lat_c,
+                        "lon": lon_c,
+                    }
+                )
 
     densities = np.array([c["density"] for c in road_cells], dtype=float)
     ref_density = float(np.percentile(densities, 95)) if densities.size else 0.0
     layers = {
         "road_cells": road_cells,
         "industrial": industrial,
+        "pois": pois,
         "ref_density": ref_density,
         "available": path.exists(),
     }

@@ -19,6 +19,7 @@ from agents.attribution_agent import (  # noqa: E402
     interpolate_city_aqi,
     run_attribution,
 )
+from agents.enforcement_agent import run_enforcement  # noqa: E402
 
 app = FastAPI(
     title="Vaayu AI",
@@ -64,3 +65,17 @@ def heatmap(
     fc = grid_to_geojson(grid)
     fc["properties"] = {"city": city, "timestamp": timestamp, "n_cells": len(grid)}
     return fc
+
+
+@app.get("/enforcement-priorities/{city}")
+def enforcement_priorities(city: str) -> dict:
+    """Deterministic ranking of monitoring zones by enforcement/response priority."""
+    result = run_enforcement({"city": city})
+    if result.get("status") != "ok":
+        raise HTTPException(status_code=400, detail=result.get("error", "enforcement ranking failed"))
+    return {
+        "city": city,
+        "priority_zones": result["priority_zones"],
+        "methodology_note": result["methodology_note"],
+        "status": "ok",
+    }
