@@ -48,6 +48,12 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+# The console report below prints "↓" — Windows terminals default to a cp1252
+# stdout encoding that can't represent it and crashes on print(). Force UTF-8
+# with a safe fallback rather than hunting down every non-ASCII character.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 import xgboost as xgb  # noqa: E402
 from sklearn.metrics import mean_absolute_error, mean_squared_error  # noqa: E402
 
@@ -226,7 +232,11 @@ def main() -> dict:
         raise SystemExit("No station had enough history to build features (min "
                          f"{MIN_STATION_ROWS} hourly observations).")
 
-    fire_active = bool(fire_df.shape[0]) and feats["nearby_fire_count"].sum() > 0
+    # bool(...) wraps the whole expression (not just the first operand) because
+    # `and` short-circuits to whichever operand decided the result — if that's
+    # the pandas/numpy comparison, it's a numpy.bool_, which json.dumps() can't
+    # serialize. Only ever surfaced once real fire data made this True.
+    fire_active = bool(fire_df.shape[0] and feats["nearby_fire_count"].sum() > 0)
     logger.info(
         f"Built {len(feats)} feature rows across {feats['city'].nunique()} cities / "
         f"{feats['station_id'].nunique()} stations "

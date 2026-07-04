@@ -14,6 +14,7 @@ import hashlib
 import json
 import logging
 import os
+import re
 import time
 from pathlib import Path
 from typing import Any, Callable
@@ -30,11 +31,24 @@ CACHE_DIR = Path(__file__).resolve().parent.parent / "db" / "raw_cache"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 
+_UNSAFE_FILENAME_CHARS = re.compile(r'[<>:"/\\|?*]')
+
+
 def cache_key_for(prefix: str, params: dict) -> str:
-    """Build a stable, filesystem-safe cache key from a prefix + request params."""
+    """
+    Build a stable, filesystem-safe cache key from a prefix + request params.
+
+    The digest already guarantees uniqueness; sanitizing the prefix is purely
+    for Windows compatibility — NTFS rejects `<>:"/\\|?*` in filenames, and
+    ISO timestamps (e.g. OpenAQ's date_from/date_to, "2025-01-10T00:00:00Z")
+    embed colons, which previously reached the filename unsanitized and made
+    every such cache write raise OSError 22 ("Invalid argument") on Windows —
+    silently breaking pagination that depends on the call actually returning.
+    """
     raw = prefix + "::" + json.dumps(params, sort_keys=True, default=str)
     digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
-    return f"{prefix}__{digest}"
+    safe_prefix = _UNSAFE_FILENAME_CHARS.sub("-", prefix)
+    return f"{safe_prefix}__{digest}"
 
 
 def _cached_request(

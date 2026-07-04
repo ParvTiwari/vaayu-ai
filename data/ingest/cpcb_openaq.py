@@ -259,10 +259,23 @@ def _openaq_sensors_for_location(location_id: int, headers: dict) -> list[dict]:
 
 
 def _openaq_sensor_hours(
-    sensor_id: int, date_from: str, date_to: str, headers: dict, limit: int = 1000, max_pages: int = 50
+    sensor_id: int, date_from: str, date_to: str, headers: dict, limit: int = 1000, max_pages: int = 100
 ) -> list[dict]:
+    """
+    Paginate a sensor's /hours results within [date_from, date_to].
+
+    OpenAQ v3's /hours endpoint has been observed to honour date_from but NOT
+    date_to server-side: it keeps returning full pages of a sensor's entire
+    remaining history well past the requested window, until an eventual
+    (slow) 408. len(batch) < limit therefore may never fire before we've
+    walked years of unwanted data. Fix: check each row's own timestamp and
+    stop as soon as we see data past date_to, rather than trusting page size
+    alone to signal "done". This is a per-row check (not an order
+    assumption), so it's correct even if a single page straddles the boundary.
+    """
     results: list[dict] = []
     page = 1
+    date_to_ts = pd.Timestamp(date_to)
     while page <= max_pages:
         params = {"date_from": date_from, "date_to": date_to, "limit": limit, "page": page}
         try:
@@ -276,7 +289,20 @@ def _openaq_sensor_hours(
             logger.warning(f"OpenAQ hours fetch failed for sensor {sensor_id} page {page}: {exc}")
             break
         batch = data.get("results", [])
-        results.extend(batch)
+        if not batch:
+            break
+
+        past_end = False
+        for row in batch:
+            ts = ((row.get("period") or {}).get("datetimeFrom") or {}).get("utc")
+            if ts and pd.Timestamp(ts) > date_to_ts:
+                past_end = True
+                continue
+            results.append(row)
+
+        if past_end:
+            logger.debug(f"sensor {sensor_id}: page {page} crossed date_to — stopping pagination early")
+            break
         if len(batch) < limit:
             break
         page += 1
@@ -297,7 +323,10 @@ def _fetch_openaq_historical(bbox: tuple[float, float, float, float], start_date
 
     date_from = f"{start_date}T00:00:00Z"
     date_to = f"{end_date}T23:59:59Z"
+    date_from_ts = pd.Timestamp(date_from)
+    date_to_ts = pd.Timestamp(date_to)
     rows = []
+    skipped_dead = 0
     for loc in locations:
         loc_id = loc.get("id")
         loc_name = loc.get("name") or f"openaq_{loc_id}"
@@ -311,6 +340,26 @@ def _fetch_openaq_historical(bbox: tuple[float, float, float, float], start_date
             if param_name not in ("pm25", "pm10"):
                 continue
             sensor_id = sensor.get("id")
+
+            # /hours ignores date_from/date_to server-side (confirmed live) and
+            # always paginates from the sensor's absolute first reading, so a
+            # sensor whose datetimeLast predates our window would otherwise
+            # burn pages walking its entire (irrelevant) history before
+            # returning nothing. Sensor metadata already tells us this up
+            # front — skip it without making a single /hours request.
+            last_seen = ((sensor.get("datetimeLast") or {}).get("utc"))
+            if last_seen and pd.Timestamp(last_seen) < date_from_ts:
+                skipped_dead += 1
+                logger.debug(f"sensor {sensor_id} ({loc_name}/{param_name}): last reading {last_seen} "
+                             f"predates the window — skipping (dead sensor)")
+                continue
+            first_seen = ((sensor.get("datetimeFirst") or {}).get("utc"))
+            if first_seen and pd.Timestamp(first_seen) > date_to_ts:
+                skipped_dead += 1
+                logger.debug(f"sensor {sensor_id} ({loc_name}/{param_name}): first reading {first_seen} "
+                             f"is after the window — skipping")
+                continue
+
             for h in _openaq_sensor_hours(sensor_id, date_from, date_to, headers):
                 ts = ((h.get("period") or {}).get("datetimeFrom") or {}).get("utc")
                 if not ts:

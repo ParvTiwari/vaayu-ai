@@ -13,7 +13,9 @@ https://firms.modaps.eosdis.nasa.gov/api/map_key/).
 
 FIRMS area/CSV endpoint:
     /api/area/csv/{MAP_KEY}/{SOURCE}/{west,south,east,north}/{DAY_RANGE}/{START_DATE}
-- DAY_RANGE is capped at 10 days per request, so long ranges are chunked.
+- DAY_RANGE is capped at 5 days per request for the VIIRS_SNPP sources used here
+  (verified directly against the live API — requesting 10 returns HTTP 400
+  "Invalid day range. Expects [1..5]."), so long ranges are chunked in 5-day steps.
 - NRT ("near real-time") products only retain roughly the last ~2 months;
   older data lives in the SP ("standard processing") archive, which in turn
   lags the present by a couple of months. We therefore pick SP vs NRT per
@@ -44,7 +46,7 @@ SOURCE_NRT = "VIIRS_SNPP_NRT"
 # stream; older chunks come from the SP archive.
 NRT_WINDOW_DAYS = 60
 
-MAX_DAY_RANGE = 10  # FIRMS hard limit per request
+MAX_DAY_RANGE = 5  # FIRMS hard limit per request for VIIRS_SNPP sources (verified live)
 
 SCHEMA_COLUMNS = ["lat", "lon", "detection_date", "confidence", "frp"]
 DAILY_SCHEMA = ["city", "station_id", "detection_date", "fire_count", "mean_frp", "max_frp"]
