@@ -21,6 +21,7 @@ from agents.attribution_agent import (
     score_traffic,
 )
 from agents.enforcement_agent import aqi_severity, rank_zones, vulnerability_from_pois
+from agents.advisory_agent import HEALTH_GUIDANCE, aqi_category_name, run_advisory
 
 
 def test_project_scaffold_sanity():
@@ -214,3 +215,65 @@ def test_enforcement_ranking_is_stable_and_deterministic():
     assert ranked[1]["priority_score"] == ranked[2]["priority_score"] == 50.0
     # Re-running yields an identical order (no randomness).
     assert [z["station_id"] for z in rank_zones(list(reversed(zones)))] == ["z3", "z2", "z1"]
+
+
+# --- advisory agent ----------------------------------------------------------
+
+
+def test_aqi_category_name_mapping():
+    assert aqi_category_name(30) == "good"
+    assert aqi_category_name(150) == "moderate"
+    assert aqi_category_name(320) == "very_poor"
+    assert aqi_category_name(999) == "severe"
+    assert aqi_category_name(None) is None
+
+
+def test_health_guidance_table_is_complete():
+    """The deterministic ground-truth table must cover all 6 CPCB categories, en + hi."""
+    cats = {"good", "satisfactory", "moderate", "poor", "very_poor", "severe"}
+    for lang in ("en", "hi"):
+        assert set(HEALTH_GUIDANCE[lang]) == cats
+        for cat in cats:
+            assert HEALTH_GUIDANCE[lang][cat]["general"]
+            assert HEALTH_GUIDANCE[lang][cat]["sensitive"]
+
+
+def _advisory_state(lang):
+    # Synthetic forecast so the test doesn't depend on ingested data files.
+    return {
+        "city": "Delhi",
+        "lat": 28.63,
+        "lon": 77.22,
+        "station_id": "openaq_test",
+        "station_name": "ITO, Delhi",
+        "lang": lang,
+        "forecast": {"aqi": 320, "horizon_hours": 24, "timestamp": "2025-11-05T12:00:00Z"},
+    }
+
+
+def test_advisory_english_smoke():
+    out = run_advisory(_advisory_state("en"))
+    assert out["status"] == "ok"
+    assert isinstance(out["advisory_text"], str) and len(out["advisory_text"]) > 0
+    src = out["sources_cited"]
+    assert src["station_name"] == "ITO, Delhi"
+    assert src["aqi"] == 320.0
+    assert src["aqi_category"] == "very_poor"      # 320 → very_poor
+    assert src["reading_timestamp"] == "2025-11-05T12:00:00Z"
+    assert src["language"] == "en"
+
+
+def test_advisory_second_language_smoke():
+    """Hindi (the second language) returns non-empty output and populated sources."""
+    out = run_advisory(_advisory_state("hi"))
+    assert out["status"] == "ok"
+    assert len(out["advisory_text"]) > 0
+    # Deterministic Hindi guidance contains Devanagari script.
+    assert any("ऀ" <= ch <= "ॿ" for ch in out["advisory_text"])
+    assert out["sources_cited"]["station_id"] == "openaq_test"
+    assert out["sources_cited"]["language"] == "hi"
+
+
+def test_advisory_errors_without_any_aqi():
+    out = run_advisory({"city": "Nowhere-Ville", "lang": "en"})  # no forecast, no data
+    assert out["status"] == "error"

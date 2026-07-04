@@ -6,14 +6,16 @@ added here as each remaining agent is implemented. /attribution and /heatmap
 are served by the deterministic Attribution Agent.
 """
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query
+from pydantic import BaseModel
 
 # Load .env from the project root before any agent module reads os.getenv().
 load_dotenv(Path(__file__).resolve().parent / ".env")
 
+from agents.advisory_agent import run_advisory  # noqa: E402
 from agents.attribution_agent import (  # noqa: E402
     grid_to_geojson,
     interpolate_city_aqi,
@@ -77,5 +79,29 @@ def enforcement_priorities(city: str) -> dict:
         "city": city,
         "priority_zones": result["priority_zones"],
         "methodology_note": result["methodology_note"],
+        "status": "ok",
+    }
+
+
+class AdvisoryRequest(BaseModel):
+    city: str
+    lat: Optional[float] = None
+    lon: Optional[float] = None
+    lang: str = "en"
+    station_id: Optional[str] = None
+    forecast: Optional[dict[str, Any]] = None
+    attribution: Optional[dict[str, Any]] = None
+
+
+@app.post("/advisory")
+def advisory(req: AdvisoryRequest) -> dict:
+    """Localized, source-cited citizen advisory (deterministic guidance + LLM narration)."""
+    result = run_advisory(req.model_dump())
+    if result.get("status") != "ok":
+        raise HTTPException(status_code=400, detail=result.get("error", "advisory failed"))
+    return {
+        "advisory_text": result["advisory_text"],
+        "sources_cited": result["sources_cited"],
+        "voice_output_path": result.get("voice_output_path"),
         "status": "ok",
     }
