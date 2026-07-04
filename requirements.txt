@@ -10,6 +10,7 @@ python-dotenv
 langgraph
 langchain-core
 folium
+streamlit-folium
 plotly
 streamlit
 pytest

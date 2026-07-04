@@ -17,11 +17,14 @@ load_dotenv(Path(__file__).resolve().parent / ".env")
 
 from agents.advisory_agent import run_advisory  # noqa: E402
 from agents.attribution_agent import (  # noqa: E402
+    city_station_snapshot,
     grid_to_geojson,
     interpolate_city_aqi,
+    latest_reading_timestamp,
     run_attribution,
 )
 from agents.enforcement_agent import run_enforcement  # noqa: E402
+from agents.forecast_agent import run_forecast  # noqa: E402
 from agents.graph import run_pipeline  # noqa: E402
 
 app = FastAPI(
@@ -52,21 +55,45 @@ def attribution(
     return {"city": city, "attribution": result["attribution"], "status": "ok"}
 
 
+@app.get("/stations/{city}")
+def stations(city: str) -> dict:
+    """Latest AQI + CPCB category per station for a city (base map markers)."""
+    snap = city_station_snapshot(city)
+    return {"city": city, "count": len(snap), "stations": snap, "status": "ok"}
+
+
+@app.get("/forecast/{city}")
+def forecast(
+    city: str,
+    lat: Optional[float] = Query(None),
+    lon: Optional[float] = Query(None),
+    station_id: Optional[str] = Query(None),
+) -> dict:
+    """24/48/72h AQI forecast for the nearest station to the point (or station_id)."""
+    result = run_forecast({"city": city, "lat": lat, "lon": lon, "station_id": station_id})
+    if result.get("status") != "ok":
+        raise HTTPException(status_code=400, detail=result.get("error", "forecast failed"))
+    return {"city": city, "forecast": result["forecast"], "status": "ok"}
+
+
 @app.get("/heatmap/{city}")
 def heatmap(
     city: str,
-    timestamp: str = Query(..., description="ISO timestamp to interpolate AQI at"),
+    timestamp: Optional[str] = Query(None, description="ISO timestamp; defaults to the latest reading"),
     grid_resolution_km: float = Query(1.0, gt=0.05, le=10.0),
 ) -> dict:
     """IDW-interpolated AQI grid over the city bbox, as a GeoJSON point layer."""
-    grid = interpolate_city_aqi(city, timestamp, grid_resolution_km)
+    ts = timestamp or latest_reading_timestamp(city)
+    if ts is None:
+        raise HTTPException(status_code=404, detail=f"no readings available for {city} (or unknown city)")
+    grid = interpolate_city_aqi(city, ts, grid_resolution_km)
     if grid.empty:
         raise HTTPException(
             status_code=404,
-            detail=f"no station readings near {timestamp} for {city} (or unknown city)",
+            detail=f"no station readings near {ts} for {city} (or unknown city)",
         )
     fc = grid_to_geojson(grid)
-    fc["properties"] = {"city": city, "timestamp": timestamp, "n_cells": len(grid)}
+    fc["properties"] = {"city": city, "timestamp": ts, "n_cells": len(grid)}
     return fc
 
 

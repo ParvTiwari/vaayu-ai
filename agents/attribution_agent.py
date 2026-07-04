@@ -454,6 +454,43 @@ def idw_interpolate(grid_lat, grid_lon, s_lat, s_lon, s_aqi, power: float = IDW_
     return (w * s_aqi).sum(axis=1) / w.sum(axis=1)
 
 
+def latest_reading_timestamp(city: str) -> str | None:
+    """Most recent AQI reading timestamp for a city (used as the heatmap default)."""
+    if not UNIFIED_PATH.exists():
+        return None
+    u = pd.read_parquet(UNIFIED_PATH, columns=["city", "timestamp", "aqi"])
+    u = u[(u["city"] == city)].dropna(subset=["aqi", "timestamp"])
+    if u.empty:
+        return None
+    return pd.to_datetime(u["timestamp"], utc=True).max().isoformat()
+
+
+def city_station_snapshot(city: str) -> list[dict]:
+    """Latest AQI + CPCB category per station for a city — powers the map markers."""
+    from agents.forecast_agent import aqi_category  # local import avoids import-time coupling
+
+    if not UNIFIED_PATH.exists():
+        return []
+    u = pd.read_parquet(UNIFIED_PATH, columns=["city", "station_id", "station_name", "lat", "lon", "timestamp", "aqi"])
+    u = u[(u["city"] == city)].dropna(subset=["lat", "lon", "aqi", "timestamp"])
+    if u.empty:
+        return []
+    u["timestamp"] = pd.to_datetime(u["timestamp"], utc=True)
+    latest = u.sort_values("timestamp").groupby("station_id").tail(1)
+    return [
+        {
+            "station_id": r.station_id,
+            "station_name": r.station_name or r.station_id,
+            "lat": round(float(r.lat), 6),
+            "lon": round(float(r.lon), 6),
+            "aqi": round(float(r.aqi), 1),
+            "category": aqi_category(float(r.aqi)),
+            "timestamp": r.timestamp.isoformat(),
+        }
+        for r in latest.itertuples(index=False)
+    ]
+
+
 def grid_to_geojson(grid: pd.DataFrame) -> dict:
     """Turn an interpolate_city_aqi() grid into a GeoJSON point FeatureCollection."""
     features = [
@@ -472,6 +509,8 @@ __all__ = [
     "interpolate_city_aqi",
     "idw_interpolate",
     "grid_to_geojson",
+    "city_station_snapshot",
+    "latest_reading_timestamp",
     "compute_attribution",
     "score_traffic",
     "score_industrial",

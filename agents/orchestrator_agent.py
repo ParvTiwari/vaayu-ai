@@ -17,15 +17,19 @@ VALID_QUERY_TYPES = {"forecast", "attribution", "enforcement", "advisory", "full
 DEFAULT_QUERY_TYPE = "full"
 
 # Ordered so the most specific intents win when several keywords co-occur.
+# Advisory is checked before forecast on purpose: a safety question like
+# "is it safe to jog tomorrow?" mentions "tomorrow" but is fundamentally an
+# advisory request, so the health/safety words should win over "tomorrow".
 _INTENT_KEYWORDS: list[tuple[str, tuple[str, ...]]] = [
     ("enforcement", ("enforce", "priority", "prioriti", "inspect", "hotspot", "worst zone",
                      "worst-affected", "action plan", "rank")),
-    ("attribution", ("source", "cause", "why", "blame", "attribut", "traffic", "industrial",
-                     "factory", "stubble", "fire", "responsible", "contribut")),
+    ("attribution", ("source", "cause", "blame", "attribut", "traffic", "industrial",
+                     "factory", "stubble", "responsible", "contribut", "whose fault", "who is to blame")),
+    ("advisory", ("advisory", "advice", "should i", "safe to", "is it safe", "safe for",
+                  "health", "mask", "go out", "jog", "run outside", "exercise", "children",
+                  "elderly", "recommend", "precaution")),
     ("forecast", ("forecast", "predict", "tomorrow", "next 24", "next 48", "next 72",
-                  "will it", "expected", "outlook", "coming days")),
-    ("advisory", ("advisory", "advice", "should i", "safe to", "is it safe", "health",
-                  "mask", "go out", "jog", "exercise", "children", "recommend")),
+                  "will it", "expected", "outlook", "coming days", "day after")),
     ("full", ("full", "everything", "complete", "overall", "all of", "summary", "report",
               "brief me")),
 ]
