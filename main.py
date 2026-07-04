@@ -10,7 +10,7 @@ from typing import Any, Optional
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 # Load .env from the project root before any agent module reads os.getenv().
 load_dotenv(Path(__file__).resolve().parent / ".env")
@@ -42,8 +42,8 @@ def health_check() -> dict[str, str]:
 @app.get("/attribution/{city}")
 def attribution(
     city: str,
-    lat: Optional[float] = Query(None, description="Latitude of the point to score"),
-    lon: Optional[float] = Query(None, description="Longitude of the point to score"),
+    lat: Optional[float] = Query(None, ge=-90, le=90, description="Latitude of the point to score"),
+    lon: Optional[float] = Query(None, ge=-180, le=180, description="Longitude of the point to score"),
     station_id: Optional[str] = Query(None, description="Station id (alternative to lat/lon)"),
     date: Optional[str] = Query(None, description="ISO date; affects fire seasonality"),
 ) -> dict:
@@ -65,8 +65,8 @@ def stations(city: str) -> dict:
 @app.get("/forecast/{city}")
 def forecast(
     city: str,
-    lat: Optional[float] = Query(None),
-    lon: Optional[float] = Query(None),
+    lat: Optional[float] = Query(None, ge=-90, le=90),
+    lon: Optional[float] = Query(None, ge=-180, le=180),
     station_id: Optional[str] = Query(None),
 ) -> dict:
     """24/48/72h AQI forecast for the nearest station to the point (or station_id)."""
@@ -113,8 +113,8 @@ def enforcement_priorities(city: str) -> dict:
 
 class AdvisoryRequest(BaseModel):
     city: str
-    lat: Optional[float] = None
-    lon: Optional[float] = None
+    lat: Optional[float] = Field(None, ge=-90, le=90)
+    lon: Optional[float] = Field(None, ge=-180, le=180)
     lang: str = "en"
     station_id: Optional[str] = None
     forecast: Optional[dict[str, Any]] = None
@@ -137,8 +137,8 @@ def advisory(req: AdvisoryRequest) -> dict:
 
 class QueryRequest(BaseModel):
     city: str
-    lat: Optional[float] = None
-    lon: Optional[float] = None
+    lat: Optional[float] = Field(None, ge=-90, le=90)
+    lon: Optional[float] = Field(None, ge=-180, le=180)
     station_id: Optional[str] = None
     lang: str = "en"
     query_type: Optional[str] = None  # forecast|attribution|enforcement|advisory|full

@@ -103,13 +103,19 @@ def estimate_aqi(pm25: float | None, pm10: float | None) -> float | None:
     published sub-index breakpoints, taking the max sub-index (CPCB's own
     combination rule across pollutants). This is an approximation: official
     CPCB AQI can also incorporate NO2/SO2/O3/CO/NH3/Pb, not ingested here.
+
+    The result is capped at 500 — the top of the official CPCB AQI scale.
+    Beyond the top published PM band the sub-index is extended linearly (see
+    _linear_subindex), which for the occasional garbage/extreme sensor reading
+    (PM2.5 in the thousands µg/m³) would otherwise yield implausible AQI values
+    well above 500. Capping keeps every AQI on the official 0-500 scale.
     """
     sub_indices = [
         s
         for s in (_linear_subindex(pm25, _PM25_BREAKPOINTS), _linear_subindex(pm10, _PM10_BREAKPOINTS))
         if s is not None
     ]
-    return max(sub_indices) if sub_indices else None
+    return min(max(sub_indices), 500.0) if sub_indices else None
 
 
 def _safe_float(val) -> float | None:

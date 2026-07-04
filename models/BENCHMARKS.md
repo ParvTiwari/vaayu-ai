@@ -1,6 +1,6 @@
 # Vaayu AI — Forecast Model Card & Benchmarks
 
-_Generated 2026-07-03T09:50:04.509228+00:00 by `models/train_forecast_model.py`._
+_Generated 2026-07-03T12:06:59.337940+00:00 by `models/train_forecast_model.py`._
 
 ## Task
 
@@ -33,14 +33,14 @@ Location/identity: `lat`, `lon`, one-hot `city_*`.
 Full ordered feature list is in `models/checkpoints/forecast_metadata.json`.
 
 ### Top features (24h model, by XGBoost gain-importance)
-- `aqi_current` — 0.55052
-- `aqi_roll_6h` — 0.1058
-- `aqi_roll_24h` — 0.08064
-- `is_winter_pollution_season` — 0.0613
-- `aqi_lag_1h` — 0.04323
-- `month` — 0.02467
-- `aqi_lag_48h` — 0.01696
-- `aqi_lag_24h` — 0.0144
+- `aqi_current` — 0.5368
+- `aqi_roll_6h` — 0.17204
+- `is_winter_pollution_season` — 0.07368
+- `aqi_roll_24h` — 0.06236
+- `aqi_lag_1h` — 0.04163
+- `month` — 0.01807
+- `aqi_lag_48h` — 0.0128
+- `aqi_lag_24h` — 0.01161
 
 ## Data & split
 
@@ -59,12 +59,12 @@ Full ordered feature list is in `models/checkpoints/forecast_metadata.json`.
 
 | City | Horizon | n (test) | Persistence RMSE | Model RMSE | RMSE ↓ | Persistence MAE | Model MAE | Beats baseline? |
 |---|---|---:|---:|---:|---:|---:|---:|:--:|
-| Delhi | 24h | 28847 | 132.26 | 106.47 | +19.5% | 84.53 | 72.41 | ✅ yes |
-| Delhi | 48h | 28051 | 140.85 | 108.87 | +22.7% | 93.39 | 75.34 | ✅ yes |
-| Delhi | 72h | 27402 | 139.6 | 111.25 | +20.3% | 94.39 | 77.83 | ✅ yes |
-| ALL | 24h | 28847 | 132.26 | 106.47 | +19.5% | 84.53 | 72.41 | ✅ yes |
-| ALL | 48h | 28051 | 140.85 | 108.87 | +22.7% | 93.39 | 75.34 | ✅ yes |
-| ALL | 72h | 27402 | 139.6 | 111.25 | +20.3% | 94.39 | 77.83 | ✅ yes |
+| Delhi | 24h | 28847 | 109.49 | 91.29 | +16.6% | 77.13 | 69.13 | ✅ yes |
+| Delhi | 48h | 28051 | 118.28 | 94.92 | +19.8% | 86.0 | 72.76 | ✅ yes |
+| Delhi | 72h | 27402 | 118.95 | 97.15 | +18.3% | 87.27 | 73.34 | ✅ yes |
+| ALL | 24h | 28847 | 109.49 | 91.29 | +16.6% | 77.13 | 69.13 | ✅ yes |
+| ALL | 48h | 28051 | 118.28 | 94.92 | +19.8% | 86.0 | 72.76 | ✅ yes |
+| ALL | 72h | 27402 | 118.95 | 97.15 | +18.3% | 87.27 | 73.34 | ✅ yes |
 
 _RMSE/MAE are in AQI points. "RMSE ↓" is the percentage RMSE reduction of the
 model versus persistence (positive = model better). "ALL" pools every city's
@@ -72,9 +72,9 @@ test rows._
 
 ## Verdict — does the model beat persistence?
 
-- **Delhi / 24h** beats persistence by **+19.5% RMSE**.
-- **Delhi / 48h** beats persistence by **+22.7% RMSE**.
-- **Delhi / 72h** beats persistence by **+20.3% RMSE**.
+- **Delhi / 24h** beats persistence by **+16.6% RMSE**.
+- **Delhi / 48h** beats persistence by **+19.8% RMSE**.
+- **Delhi / 72h** beats persistence by **+18.3% RMSE**.
 
 ## Honest caveats
 
