@@ -22,6 +22,7 @@ from agents.attribution_agent import (  # noqa: E402
     run_attribution,
 )
 from agents.enforcement_agent import run_enforcement  # noqa: E402
+from agents.graph import run_pipeline  # noqa: E402
 
 app = FastAPI(
     title="Vaayu AI",
@@ -105,3 +106,20 @@ def advisory(req: AdvisoryRequest) -> dict:
         "voice_output_path": result.get("voice_output_path"),
         "status": "ok",
     }
+
+
+class QueryRequest(BaseModel):
+    city: str
+    lat: Optional[float] = None
+    lon: Optional[float] = None
+    station_id: Optional[str] = None
+    lang: str = "en"
+    query_type: Optional[str] = None  # forecast|attribution|enforcement|advisory|full
+    query: Optional[str] = None       # free text; used for intent detection if query_type omitted
+
+
+@app.post("/query")
+def query(req: QueryRequest) -> dict:
+    """Run the full LangGraph multi-agent pipeline and return final_response."""
+    state = run_pipeline({k: v for k, v in req.model_dump().items() if v is not None})
+    return state.get("final_response", {"status": "empty", "error": state.get("error")})

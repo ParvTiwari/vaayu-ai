@@ -22,6 +22,8 @@ from agents.attribution_agent import (
 )
 from agents.enforcement_agent import aqi_severity, rank_zones, vulnerability_from_pois
 from agents.advisory_agent import HEALTH_GUIDANCE, aqi_category_name, run_advisory
+from agents.orchestrator_agent import run_orchestrator
+from agents.output_agent import run_output
 
 
 def test_project_scaffold_sanity():
@@ -277,3 +279,52 @@ def test_advisory_second_language_smoke():
 def test_advisory_errors_without_any_aqi():
     out = run_advisory({"city": "Nowhere-Ville", "lang": "en"})  # no forecast, no data
     assert out["status"] == "error"
+
+
+# --- orchestrator routing + output assembly ----------------------------------
+
+
+def test_orchestrator_explicit_query_type_wins():
+    s = run_orchestrator({"city": "Delhi", "query_type": "enforcement", "query": "forecast tomorrow"})
+    assert s["query_type"] == "enforcement"  # explicit type beats the text intent
+
+
+def test_orchestrator_intent_detection():
+    assert run_orchestrator({"city": "Delhi", "query": "who is to blame for this smog?"})["query_type"] == "attribution"
+    assert run_orchestrator({"city": "Delhi", "query": "what will AQI be tomorrow?"})["query_type"] == "forecast"
+    assert run_orchestrator({"city": "Delhi", "query": "which zones should we inspect first?"})["query_type"] == "enforcement"
+    assert run_orchestrator({"city": "Delhi", "query": "is it safe to go for a jog?"})["query_type"] == "advisory"
+    assert run_orchestrator({"city": "Delhi", "query": "give me the full report"})["query_type"] == "full"
+    assert run_orchestrator({"city": "Delhi"})["query_type"] == "full"  # default
+
+
+def test_orchestrator_lang_normalization():
+    assert run_orchestrator({"city": "Delhi", "lang": "Hindi"})["lang"] == "hi"
+    assert run_orchestrator({"city": "Delhi", "lang": "ENGLISH"})["lang"] == "en"
+    assert run_orchestrator({"city": "Delhi"})["lang"] == "en"
+
+
+def test_output_assembles_map_and_chat_from_partial_state():
+    state = {
+        "city": "Delhi", "lang": "en", "query_type": "full", "lat": 28.6, "lon": 77.2,
+        "forecast": {"aqi": 310.0, "category": "very_poor", "horizon_hours": 24,
+                     "reference_aqi": 320.0, "model": "xgboost", "lat": 28.6, "lon": 77.2,
+                     "station_id": "s1", "station_name": "ITO", "horizons": {}},
+        "attribution": {"traffic_score": 0.9, "industrial_score": 0.1, "fire_score": 0.0,
+                        "overall_source_estimate": "traffic", "confidence": "medium",
+                        "details": {"point": {"lat": 28.6, "lon": 77.2}}},
+        "advisory_text": "Stay indoors today.",
+    }
+    out = run_output(state)
+    fr = out["final_response"]
+    assert fr["components_run"] == ["forecast", "attribution", "advisory"]
+    assert fr["map"]["forecast"]["aqi"] == 310.0
+    assert fr["map"]["attribution"]["overall_source_estimate"] == "traffic"
+    assert "improving" in fr["chat"]["lines"][0]           # 310 < 320 reference
+    assert fr["chat"]["advisory"] == "Stay indoors today."
+    assert "/heatmap/Delhi" in fr["map"]["heatmap_hint"]["endpoint"]
+
+
+def test_output_empty_when_nothing_ran():
+    fr = run_output({"city": "Delhi", "query_type": "forecast"})["final_response"]
+    assert fr["status"] == "empty" and fr["components_run"] == []
