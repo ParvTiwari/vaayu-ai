@@ -48,7 +48,15 @@ ROOT = Path(__file__).resolve().parent.parent
 UNIFIED_PATH = ROOT / "data" / "db" / "unified_history.parquet"
 ADVISORY_AUDIO_DIR = ROOT / "data" / "db" / "advisories"
 
-LLM_MODEL = "claude-opus-4-8"
+# LLM narration is provider-flexible. The provider is auto-detected from the key
+# (gsk_… → Groq, sk-ant-api… → Anthropic) unless LLM_PROVIDER is set, and every
+# default is overridable via env (LLM_PROVIDER / LLM_MODEL / LLM_BASE_URL).
+# Groq and any OpenAI-compatible endpoint go over HTTP; Anthropic uses its SDK.
+_PROVIDER_DEFAULTS = {
+    "groq": {"base_url": "https://api.groq.com/openai/v1", "model": "llama-3.3-70b-versatile"},
+    "openai": {"base_url": "https://api.openai.com/v1", "model": "gpt-4o-mini"},
+    "anthropic": {"base_url": None, "model": "claude-opus-4-8"},
+}
 SECOND_LANGUAGE = "hi"  # deterministic fallback covers en + hi; others need the LLM
 GTTS_LANGS = {"en": "en", "hi": "hi", "kn": "kn"}
 
@@ -194,33 +202,80 @@ def _resolve_reading(state: dict[str, Any]) -> dict | None:
 # --- LLM narrative layer (provider-swappable) --------------------------------
 
 
+def _detect_provider(key: str) -> str:
+    """Auto-detect the LLM provider from LLM_PROVIDER or the key prefix."""
+    forced = os.getenv("LLM_PROVIDER", "").strip().lower()
+    if forced:
+        return forced
+    if key.startswith("sk-ant-"):
+        return "anthropic"
+    if key.startswith("gsk_"):
+        return "groq"
+    # OpenAI keys start with sk-; anything else we treat as an OpenAI-compatible
+    # endpoint (Groq is the default base URL) — override with LLM_BASE_URL.
+    return "openai" if key.startswith("sk-") else "groq"
+
+
 def call_llm(prompt: str, system: str | None = None, max_tokens: int = 400) -> str | None:
     """
-    Single, provider-swappable LLM call. Reads the key from LLM_API_KEY and uses
-    the Anthropic SDK (Claude). Returns the response text, or None if no key is
-    configured / the SDK is unavailable / the call fails — callers must handle
-    None by falling back to the deterministic guidance.
+    Single, provider-flexible LLM call. Reads the key from LLM_API_KEY and routes
+    to whichever provider is present (auto-detected, or forced via LLM_PROVIDER):
+    Anthropic (Claude SDK) or any OpenAI-compatible /chat/completions endpoint
+    (Groq by default, also OpenAI/OpenRouter/Together via LLM_BASE_URL). Returns
+    the response text, or None if no key / the call fails — callers fall back to
+    the deterministic guidance.
     """
     key = os.getenv("LLM_API_KEY", "").strip()
     if not key:
         logger.info("LLM_API_KEY not set — using deterministic advisory (no LLM narration).")
         return None
+    provider = _detect_provider(key)
+    if provider == "anthropic":
+        return _call_anthropic(key, prompt, system, max_tokens)
+    return _call_openai_compatible(provider, key, prompt, system, max_tokens)
+
+
+def _call_anthropic(key: str, prompt: str, system: str | None, max_tokens: int) -> str | None:
     try:
         import anthropic
     except ImportError:
         logger.warning("anthropic SDK not installed — falling back to deterministic advisory.")
         return None
+    model = os.getenv("LLM_MODEL", "").strip() or _PROVIDER_DEFAULTS["anthropic"]["model"]
     try:
         client = anthropic.Anthropic(api_key=key)
         resp = client.messages.create(
-            model=LLM_MODEL,
-            max_tokens=max_tokens,
-            system=system,
+            model=model, max_tokens=max_tokens, system=system,
             messages=[{"role": "user", "content": prompt}],
         )
         return "".join(b.text for b in resp.content if getattr(b, "type", None) == "text").strip() or None
     except Exception as exc:  # network/auth/etc. — never let the advisory hard-fail
-        logger.warning(f"LLM call failed ({exc}); falling back to deterministic advisory.")
+        logger.warning(f"Anthropic LLM call failed ({exc}); falling back to deterministic advisory.")
+        return None
+
+
+def _call_openai_compatible(provider: str, key: str, prompt: str, system: str | None, max_tokens: int) -> str | None:
+    """Groq / OpenAI / any OpenAI-compatible chat-completions endpoint, over HTTP."""
+    import requests
+
+    defaults = _PROVIDER_DEFAULTS.get(provider, _PROVIDER_DEFAULTS["groq"])
+    base = (os.getenv("LLM_BASE_URL", "").strip() or defaults["base_url"]).rstrip("/")
+    model = os.getenv("LLM_MODEL", "").strip() or defaults["model"]
+    messages = ([{"role": "system", "content": system}] if system else []) + [{"role": "user", "content": prompt}]
+    try:
+        r = requests.post(
+            f"{base}/chat/completions",
+            headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+            json={"model": model, "messages": messages, "max_tokens": max_tokens, "temperature": 0.3},
+            timeout=30,
+        )
+        if r.status_code >= 400:
+            logger.warning(f"{provider} LLM HTTP {r.status_code}: {r.text[:200]} — falling back to deterministic advisory.")
+            return None
+        content = (r.json()["choices"][0]["message"]["content"] or "").strip()
+        return content or None
+    except Exception as exc:
+        logger.warning(f"{provider} LLM call failed ({exc}); falling back to deterministic advisory.")
         return None
 
 

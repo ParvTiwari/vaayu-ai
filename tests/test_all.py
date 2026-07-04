@@ -62,6 +62,13 @@ needs_geojson = pytest.mark.skipif(not GEOJSON_AVAILABLE, reason="Delhi city-lay
 needs_model = pytest.mark.skipif(not (DATA_AVAILABLE and MODEL_AVAILABLE), reason="model/data missing")
 
 
+@pytest.fixture(autouse=True)
+def _deterministic_advisory(monkeypatch):
+    """Force the deterministic (no-LLM) advisory path in every test, so the suite
+    stays offline and reproducible regardless of any LLM key present in .env."""
+    monkeypatch.setattr("agents.advisory_agent.call_llm", lambda *a, **k: None)
+
+
 def test_project_scaffold_sanity():
     assert True
 

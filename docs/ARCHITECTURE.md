@@ -98,7 +98,7 @@ heatmap hint) for map rendering.
 | Attribution | IDW over `unified_history` | AQI heatmap interpolation | Empty grid → HTTP 404 on `/heatmap` |
 | Enforcement | OSM vulnerability POIs + latest AQI | `risk × vulnerability` ranking | Station skipped if it has no AQI reading |
 | Advisory | `HEALTH_GUIDANCE` table (CPCB, hardcoded) | Ground-truth health facts | Always available (in-code constant) |
-| Advisory | Anthropic Claude via `LLM_API_KEY` | Rephrase/localize the guidance | **Deterministic** CPCB guidance text (`narration="deterministic_fallback"`) |
+| Advisory | LLM via `LLM_API_KEY` (Groq / Anthropic / OpenAI-compatible, auto-detected) | Rephrase/localize the guidance | **Deterministic** CPCB guidance text (`narration="deterministic_fallback"`) |
 | Advisory | gTTS | Voice audio | `voice_output_path=None` if gTTS missing / fails / `TTS_ENABLED` unset |
 | Ingestion | CPCB `data.gov.in` | Live AQI snapshot | OpenAQ `latest` fallback; ret/timeout backoff |
 | Ingestion | OpenAQ v3 | Historical AQI | Empty frame if no `OPENAQ_API_KEY` |

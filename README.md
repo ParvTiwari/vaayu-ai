@@ -111,7 +111,7 @@ error-handling table in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 | **Agent orchestration** | LangGraph (`StateGraph`) · langchain-core |
 | **Forecast ML** | XGBoost · scikit-learn · pandas · numpy · pyarrow |
 | **Geospatial** | custom numpy (haversine, IDW, shoelace) · hand-written GeoJSON (no geopandas) |
-| **LLM (advisory narration)** | Anthropic Claude (`claude-opus-4-8`) via `LLM_API_KEY` — provider-swappable behind `call_llm()` |
+| **LLM (advisory narration)** | Provider-flexible via `LLM_API_KEY` — Groq (default), Anthropic Claude, or any OpenAI-compatible endpoint; auto-detected, behind `call_llm()` |
 | **Voice** | gTTS |
 | **Frontend** | Streamlit · Folium · streamlit-folium · Plotly |
 | **Data sources** | CPCB (`data.gov.in`) / OpenAQ v3 · Open-Meteo · NASA FIRMS · OpenStreetMap / Overpass |
