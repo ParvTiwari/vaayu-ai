@@ -54,10 +54,13 @@ radiative power as an intensity proxy).
   Punjab/Haryana stubble-burning belt upwind of Delhi is captured — that
   regional biomass burning is the dominant driver of Delhi's autumn PM2.5 and
   the whole reason this feature exists (forecast leading signal + attribution).
-- FIRMS caps a single request at a **10-day range**, so long windows are
-  chunked. The 375 m **VIIRS S-NPP** product is used: the **SP** (archive)
-  stream for chunks older than ~60 days and **NRT** for recent chunks, since
-  NRT only retains ~2 months and SP lags the present by a couple of months.
+- FIRMS caps a single request at a **5-day range** for the VIIRS_SNPP sources
+  used here (confirmed directly against the live API — a 10-day request
+  returns HTTP 400 "Invalid day range. Expects [1..5]."), so long windows are
+  chunked in 5-day steps. The 375 m **VIIRS S-NPP** product is used: the
+  **SP** (archive) stream for chunks older than ~60 days and **NRT** for
+  recent chunks, since NRT only retains ~2 months and SP lags the present by
+  a couple of months.
 - Uses `VIIRS confidence` verbatim (`low`/`nominal`/`high`); duplicate hotspots
   from overlapping chunks/passes are deduped on rounded (lat, lon, date).
 
@@ -188,9 +191,54 @@ populate the full AQI table.**
 - `data/db/fire_daily.parquet` — 0 rows (no `FIRMS_API_KEY`), correct schema
   `city, station_id, detection_date, fire_count, mean_frp, max_frp`
 
+## Update (2026-07-05) — the AQI/FIRMS blockers above are now fixed
+
+The two upstream problems in "AQI + weather — slow, and gated by two upstream
+problems" above turned out to have real, fixable root causes, not just
+upstream flakiness to wait out. All three were found and fixed once a real
+`FIRMS_API_KEY` and `OPENAQ_API_KEY` were exercised end-to-end:
+
+1. **`cache_key_for()` never actually sanitized the cache-file prefix**, despite
+   its docstring's claim of being "filesystem-safe." OpenAQ's ISO timestamps
+   (`2025-01-10T00:00:00Z`) embed colons, which Windows rejects in filenames —
+   every `/hours` cache write raised `OSError 22` before it could return data,
+   silently breaking pagination. Fixed in `_http_utils.py`.
+2. **OpenAQ v3's `/hours` endpoint ignores `date_from`/`date_to` server-side**
+   and always paginates from a sensor's absolute first reading — this, not
+   flakiness, is why it "paginated through the sensor's entire history." Fixed
+   by checking each row's own timestamp client-side and stopping once past
+   `date_to`, plus skipping sensors whose `datetimeFirst`/`datetimeLast`
+   metadata shows no overlap with the requested window at all (some Bengaluru
+   stations had stopped reporting as early as 2018).
+3. **`firms_fire.py`'s `MAX_DAY_RANGE` was hardcoded to 10**, but NASA FIRMS'
+   VIIRS_SNPP sources only accept a 1–5 day range (HTTP 400 otherwise) — every
+   fire request was failing until this was caught and fixed to 5.
+
+**Result after the fix**, full 3-city backfill:
+
+| City | AQI rows | Stations | Fire station-days | Unique FIRMS detections |
+|---|---:|---:|---:|---:|
+| Delhi | 372,094 | 24 | 10,398 | 21,941 |
+| Bengaluru | 138,377 | 18 | 5,695 | 37,520 |
+| Indore | 45,331 | 5 | 1,914 | 52,289 |
+| **Total** | **555,802** | **47** (46 trained — see `docs/BENCHMARKS.md`) | **18,007** | **111,750** |
+
+`unified_history.parquet` now holds all three cities (300,349 rows with a
+weather join). The forecast model trained on this data beats persistence at
+every horizon in all three cities — see `docs/BENCHMARKS.md` §1. Indore's
+backfill alone took ~5.4 hours due to real network drops (DNS resolution
+failures, connection aborts) rather than the pagination bug, so expect a cold
+Indore run to still take a while even with the fixes in place.
+
 ## Re-running
 
 Re-running is safe and fast on repeat: every raw API response is cached to
 `data/db/raw_cache/` keyed by request parameters, so only new date ranges,
 stations, or bounding boxes trigger real network calls. Delete
 `data/db/raw_cache/` to force a full refetch.
+
+One caveat on cache reuse: the ingestion window is a **rolling** `[today -
+VAAYU_HISTORY_DAYS, today]`, so re-running on a later date shifts every chunk
+boundary by that many days and busts most of the OpenAQ/FIRMS cache even
+though the actual window barely changed — expect a re-run days later to
+re-fetch most of the AQI and fire history rather than hitting cache.

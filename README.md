@@ -18,7 +18,7 @@ and produces forecasts, attribution, prioritized enforcement, and citizen guidan
 
 | Feature | How | Auditable? |
 |---|---|---|
-| **24/48/72h AQI forecast** | XGBoost per horizon; beats a persistence baseline by **16.6–19.8% RMSE** | ML, benchmarked vs. baseline |
+| **24/48/72h AQI forecast** | XGBoost per horizon; beats a persistence baseline by **17.3–22.5% RMSE** across all 3 pilot cities | ML, benchmarked vs. baseline |
 | **Source attribution** | Deterministic traffic / industrial / fire scoring over OSM + NASA FIRMS | ✅ no LLM — documented formula |
 | **Enforcement priorities** | Zones ranked by `risk × vulnerability` (AQI severity × nearby hospitals/schools) | ✅ no LLM — documented formula |
 | **Citizen advisory** | Hardcoded CPCB health-guidance table, LLM only rephrases/localizes | ✅ health facts never LLM-generated |
@@ -93,9 +93,9 @@ error-handling table in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 | City | AQI + weather + forecast | OSM layers (attribution / enforcement) | Notes |
 |---|---|---|---|
-| **Delhi** | ✅ 24 stations, 2016–2026, model trained | ✅ 3,543 road cells · 382 industrial · 3,360 POIs | Primary pilot — end-to-end |
-| **Bengaluru** | ⏳ AQI backfill pending | ✅ 1,801 road cells · 1,285 industrial · 4,675 POIs | Attribution/enforcement live |
-| **Indore** | ⏳ AQI backfill pending | ✅ 1,145 road cells · 51 industrial · 1,524 POIs | Attribution/enforcement live |
+| **Delhi** | ✅ 24 stations, 2016–2026, model trained (+20.0–22.5% RMSE vs. persistence) | ✅ 3,543 road cells · 382 industrial · 3,360 POIs | Primary pilot — end-to-end |
+| **Bengaluru** | ✅ 18 stations, model trained (+19.2–20.2% RMSE vs. persistence) | ✅ 1,801 road cells · 1,285 industrial · 4,675 POIs | Full pipeline live |
+| **Indore** | ✅ 5 stations, model trained (+17.3–19.7% RMSE vs. persistence) | ✅ 1,145 road cells · 51 industrial · 1,524 POIs | Full pipeline live |
 
 | Language | Deterministic CPCB guidance | LLM localization | Voice (gTTS) |
 |---|---|---|---|

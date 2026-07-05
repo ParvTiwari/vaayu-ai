@@ -22,15 +22,21 @@ citizen advisories (what individuals *do*). The core intervention it enables is
 
 | Horizon | Persistence RMSE | Vaayu model RMSE | Improvement |
 |---|---:|---:|:--:|
-| 24h | 109.49 | 91.29 | **+16.6%** |
-| 48h | 118.28 | 94.92 | **+19.8%** |
-| 72h | 118.95 | 97.15 | **+18.3%** |
+| 24h | 109.49 | 87.56 | **+20.0%** |
+| 48h | 118.28 | 91.63 | **+22.5%** |
+| 72h | 118.95 | 94.25 | **+20.8%** |
 
 _(AQI points, Delhi held-out test set; see `docs/BENCHMARKS.md`.)_ At 24h the model
-cuts mean forecast error by ~18 AQI points versus the naive "tomorrow = today"
+cuts mean forecast error by ~22 AQI points versus the naive "tomorrow = today"
 baseline. **This accuracy is the lever for the entire chain below:** persistence fails
 hardest exactly on *transition days* (when a pollution episode begins or clears) —
 the days advance action matters most — and people only act on alerts they can trust.
+
+The forecast engine now beats persistence at every horizon in **all three pilot
+cities** (Delhi +20.0–22.5%, Bengaluru +19.2–20.2%, Indore +17.3–19.7% — full table in
+`docs/BENCHMARKS.md`). The health-impact arithmetic below is still deliberately scoped
+to Delhi only (§5 explains why), but the accuracy claim itself is no longer
+Delhi-specific.
 
 ## 3. Back-of-envelope health impact (Delhi pilot)
 
@@ -92,7 +98,7 @@ conservative one:
 
 So the honest Year-1 Delhi range is **~180–1,620 avoided acute events** (base 360).
 The two factors most worth scrutinizing are **A6 (action rate)** — because it depends
-on forecast trust, which is exactly what our +16.6–19.8% accuracy edge buys — and
+on forecast trust, which is exactly what our +20.0–22.5% Delhi accuracy edge buys — and
 **A2/A3 (the mortality→morbidity chain)**, where the published mortality range alone
 spans 4.5×.
 
@@ -112,12 +118,17 @@ Delhi avoided events = `E_high × adoption × act × eff = 96,000 × adoption ×
 | **5-yr cumulative (Delhi)** | | | **5,904 events** | **₹177 M** | **~$2.1 M** |
 
 **Multi-city expansion (upside, not in the headline):** Bengaluru (~13 M) and Indore
-(~3.5 M) have cleaner baseline air and far fewer high-AQI days, so their per-capita
-`E_high` is much lower — we do **not** claim Delhi-equivalent numbers for them. As a
-rough, separately-flagged estimate, at Year-5 adoption they might add on the order of
-**+20–30%** to the Delhi figure (their OSM attribution/enforcement layers already run
-today; only their AQI backfill is pending). We keep the headline Delhi-only because
-that is the city we have measured.
+(~3.5 M) now have the **same fully trained, persistence-beating forecast** as Delhi
+(+19.2–20.2% and +17.3–19.7% RMSE respectively — see `docs/BENCHMARKS.md`), plus live
+OSM attribution/enforcement layers — the engine itself is no longer Delhi-only. What
+we still have **not** built is a health-impact model for them: they have cleaner
+baseline air and far fewer high-AQI days than Delhi, so their per-capita `E_high` would
+need its own city-specific mortality/morbidity assumptions (A1–A4) rather than
+reusing Delhi's, and we don't want to fabricate those numbers. As a rough,
+separately-flagged placeholder, at Year-5 adoption they might add on the order of
+**+20–30%** to the Delhi figure — but that is a guess, not a measurement, which is
+exactly why we keep the headline Delhi-only: it's the only city where every number in
+the chain (A1–A8) is either sourced or explicitly assumed and disclosed.
 
 ## 6. Beyond the health arithmetic (harder to monetize, still real)
 
@@ -134,11 +145,17 @@ that is the city we have measured.
 
 1. A pilot MoU with one city's pollution-control board or health department to measure
    *actual* action rates (A6) and avoided admissions against a control period.
-2. Ingest Bengaluru/Indore AQI history to extend forecasting beyond Delhi.
-3. Add the FIRMS fire feature (currently 0) — expected to sharpen Oct–Nov stubble-season
-   forecasts, the highest-exposure window.
+2. ~~Ingest Bengaluru/Indore AQI history to extend forecasting beyond Delhi.~~ **Done**
+   — both cities now have trained, persistence-beating forecasts. What's still missing
+   is a health-impact model *for* them (see §5).
+3. ~~Add the FIRMS fire feature (currently 0)~~ **Done, but not yet a proven win** —
+   real fire data is active across all 3 cities, but its own feature importance is
+   still low (~0.4–0.5%, rank 17th–18th of 23). Worth revisiting once enough Oct–Nov
+   stubble-season data has accumulated to test the hypothesis properly.
 4. Swap observed-at-t weather for forecast weather to remove the mild optimism noted in
    `docs/BENCHMARKS.md`.
+5. Build Bengaluru/Indore-specific health-impact assumptions (population, attributable
+   mortality, morbidity ratio) to extend the monetized impact model beyond Delhi.
 
 ---
 

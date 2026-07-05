@@ -1,6 +1,9 @@
-# Vaayu AI — 3-Minute Pitch Video Script
+# Vaayu AI — Pitch Video Script (target 3:30–3:45)
 
-**Total spoken length:** ~420 words (~3:00 at a natural presenting pace).
+**Total spoken length:** ~525 words (~3:45 at a natural 140 wpm presenting
+pace) — inside the hackathon's required 3–4 minute window, but with little
+room left to slow down further; pick up the pace slightly on the middle beats
+if you're running long, rather than the numbers themselves.
 Format below: **`[ON SCREEN]`** = what the viewer sees / the presenter does;
 **NARRATION** = the exact words to record.
 
@@ -19,18 +22,20 @@ Format below: **`[ON SCREEN]`** = what the viewer sees / the presenter does;
 
 ## 0:30 – 1:15 · Live demo — forecast beats the baseline, then the map
 
-`[ON SCREEN]` The BENCHMARKS table on screen; highlight the 24h row
-(**91.29 vs 109.49 RMSE, +16.6%**). Then cut to the live Delhi map.
+`[ON SCREEN]` The BENCHMARKS table on screen; highlight the Delhi 24h row
+(**87.56 vs 109.49 RMSE, +20.0%**), then a quick glance down at the Bengaluru and
+Indore rows. Then cut to the live Delhi map.
 
-> **NARRATION.** Vaayu forecasts air quality 24, 48, and 72 hours ahead. The
+> **NARRATION.** Vaayu forecasts air quality 24, 48, and 72 hours ahead — and it's
+> trained and running in all three pilot cities: Delhi, Bengaluru, and Indore. The
 > baseline everyone falls back on is persistence — just assume tomorrow looks like
-> today. Our XGBoost model beats it at every horizon: at 24 hours we cut forecast
-> error by 16.6%, at 48 hours by nearly 20%. That's an 18-point drop in AQI error —
-> the difference between warning a city before a pollution spike and reacting after
-> it. Here's Delhi, live. Each dot is a real monitoring station, colored by CPCB
-> category. I'll turn on the forecast overlay — you can see where the air is headed.
-> And this interpolated heatmap fills the gaps between stations, so every
-> neighborhood gets a reading, not just the ones with a sensor.
+> today. Our XGBoost model beats it at every horizon, in every city: in Delhi we cut
+> forecast error by 20% at 24 hours, and over 22% at 48. That's a 22-point drop in
+> AQI error — the difference between warning a city before a pollution spike and
+> reacting after it. Here's Delhi, live. Each dot is a real monitoring station,
+> colored by CPCB category. I'll turn on the forecast overlay — you can see where
+> the air is headed. And this interpolated heatmap fills the gaps between stations,
+> so every neighborhood gets a reading, not just the ones with a sensor.
 
 ## 1:15 – 2:00 · Enforcement priorities + citizen advisory
 
@@ -61,7 +66,17 @@ highlight the deterministic agents vs. the single LLM box.
 > Vaayu hands a regulator or a citizen traces back to a formula and a real reading,
 > not a black box. Fifty-five automated tests keep it honest.
 
-## 2:40 – 3:00 · Impact + call to action
+## 2:40 – 3:05 · Honest limitations — what we're not overclaiming
+
+`[ON SCREEN]` A quick cut to the "Honest caveats" section of BENCHMARKS.md.
+
+> **NARRATION.** And we're upfront about what's still uncertain. We added real
+> satellite fire data for stubble-burning across all three cities — but its own
+> contribution to accuracy is still modest, so we're not claiming it's the reason we
+> beat the baseline until we can isolate that properly. We'd rather show you an
+> honest, measured result than an inflated one.
+
+## 3:05 – 3:30 · Impact + call to action
 
 `[ON SCREEN]` The IMPACT_MODEL headline number; end on the Vaayu logo + one-line
 scaling statement.
@@ -75,9 +90,14 @@ scaling statement.
 ---
 
 ### Delivery notes
-- Pace ~140 words/min; the script is ~420 words, leaving a small buffer at each cut.
-- Numbers to keep exact on screen: **+16.6% / +19.8% / +18.3%** (24/48/72h RMSE),
-  **91.29 vs 109.49** (24h), **₹177M / 5 years**.
+- Pace ~140 words/min; the script is ~525 words — targets 3:45, close to the
+  4:00 ceiling, so keep a brisk (not rushed) pace on the middle beats and only
+  slow down for the numbers on screen. Don't rush below 3:00; the submission
+  requires a 3–4 minute video.
+- Numbers to keep exact on screen: **+20.0% / +22.5% / +20.8%** (Delhi 24/48/72h
+  RMSE), **87.56 vs 109.49** (Delhi 24h), **₹177M / 5 years**. Bengaluru
+  (+19.2–20.2%) and Indore (+17.3–19.7%) beat persistence too if you want a
+  second on-screen proof point.
 - If the LLM/TTS keys aren't configured for the recording, the Hindi advisory still
   renders from the deterministic CPCB table (no audio) — say "in Hindi" over the
   on-screen Devanagari text and skip the audio beat.
