@@ -117,6 +117,7 @@ def run_output(state: dict[str, Any]) -> dict[str, Any]:
         },
         "map": map_layers,
         "sources_cited": sources_cited,
+        "voice_output_path": state.get("voice_output_path"),
     }
     state["final_response"] = final_response
     state["status"] = "ok"
