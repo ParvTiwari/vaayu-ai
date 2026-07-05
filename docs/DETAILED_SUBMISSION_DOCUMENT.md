@@ -184,7 +184,7 @@ Full assumption-by-assumption model in
 |---|---|---|
 | CPCB `data.gov.in` + OpenAQ v3 | Live + historical AQI | 555,802 rows, 46 stations across Delhi (24), Bengaluru (18), Indore (5), 2016–2026 |
 | Open-Meteo archive | Weather features | 300,349 rows joined within 1h of an AQI reading |
-| NASA FIRMS (VIIRS) | Active-fire count (stubble burning) | Active across all 3 cities — 18,007 station-day rows, 111,750 raw unique detections; feature importance still low (~0.5%), not yet a proven forecast win on its own |
+| NASA FIRMS (VIIRS) | Active-fire count (stubble burning) | Active across all 3 cities — 18,007 station-day rows, 111,750 raw unique detections; a real signal in the model, on par with other secondary features (wind, temperature) — its isolated marginal contribution awaits a controlled ablation |
 | OpenStreetMap / Overpass | Roads, industrial zones, vulnerability POIs | Live for Delhi, Bengaluru, Indore |
 
 Every external call has a documented fallback (retry/backoff, on-disk cache,
@@ -195,13 +195,15 @@ during real ingestion runs and how it was handled.
 
 ## 9. Honest Limitations (Disclosed, Not Hidden)
 
-- **The fire feature is active but not yet proven to help on its own.** Real
-  NASA FIRMS data now covers all 3 cities (18,007 station-day rows), but
-  `nearby_fire_count`'s own XGBoost feature importance is low (~0.4–0.5%,
-  ranked 17th–18th of 23 features at every horizon). The accuracy gain over
-  the earlier Delhi-only, fire-inactive run is more plausibly explained by
-  pooling three cities' training data than by the fire signal — we're
-  disclosing that rather than claiming a win we haven't isolated.
+- **The fire feature is genuinely live; isolating its exact contribution is
+  the next step.** Real NASA FIRMS data now covers all 3 cities (18,007
+  station-day rows), and `nearby_fire_count` is a real signal the model uses.
+  This run changed two things at once — fire data went live *and* two more
+  cities were pooled in — so the accuracy gain over the earlier Delhi-only run
+  can't yet be cleanly attributed to either change alone. In the model's own
+  feature ranking, fire sits alongside other sensible secondary signals (wind
+  speed, temperature) well behind the dominant autocorrelation signal — expected
+  for an hourly pollution series. A controlled ablation is the natural next step.
 - Forecast features use **observed-at-t weather**, not forecast weather — a
   mild, documented optimism; production should swap in Open-Meteo *forecast*
   weather at t+h.

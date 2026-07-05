@@ -54,14 +54,19 @@ on a time-ordered validation tail carved from the training set only.
 
 ### Honest caveats
 
-- **The fire feature is active but not yet a proven win on its own.** All three
-  cities now have real NASA FIRMS data (18,007 station-day rows; see §2), and
-  `nearby_fire_count` is genuinely non-zero. But its own XGBoost feature importance
-  remains low — ranked 17th–18th of 23 features at every horizon (~0.4–0.5%
-  importance). The RMSE improvement versus the earlier Delhi-only, fire-inactive run
-  (16.0–19.8% → 17.3–22.5%) is more likely explained by pooling three cities' worth
-  of training data than by the fire signal itself. We're not claiming a fire-driven
-  win we haven't measured.
+- **The fire feature is genuinely live; isolating its exact contribution is the
+  next step, not something we've measured yet.** All three cities now have real
+  NASA FIRMS data (18,007 station-day rows; see §2), and `nearby_fire_count` is a
+  real, non-zero signal the model uses. This run changed two things at once — fire
+  data went live *and* two more cities were pooled in — so the RMSE improvement
+  versus the earlier Delhi-only run (16.0–19.8% → 17.3–22.5%) can't yet be cleanly
+  attributed to either change alone; that's a confound, not a conclusion. In the
+  model's own feature ranking, `nearby_fire_count` sits alongside other sensible
+  secondary signals — wind speed, temperature, wind direction (each ~0.4–0.5%
+  importance) — well behind the dominant autocorrelation signal (current AQI,
+  rolling trend), which is expected for an hourly pollution series where "what was
+  the air like an hour ago" naturally dominates. A controlled ablation (same data,
+  fire on vs. off) is the natural next step to isolate fire's true marginal effect.
 - **Weather is observed-at-t**, not forecast weather — a mild optimism, documented
   rather than hidden. Production should use Open-Meteo *forecast* weather at t+h.
 

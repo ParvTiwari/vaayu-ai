@@ -409,6 +409,21 @@ def _write_benchmarks(meta: dict) -> None:
                     verdicts.append(f"- **{c} / {h}h** does **NOT** beat persistence ({m['rmse_reduction_pct']:+.1f}% RMSE) — see caveats.")
     verdict_block = "\n".join(verdicts) if verdicts else "- No horizon had usable test data."
 
+    if meta["fire_feature_active"]:
+        fire_caveat = (
+            "- **Fire feature:** `nearby_fire_count` is genuinely active this run — real "
+            "NASA FIRMS data, not zeros. Its exact marginal contribution isn't isolated "
+            "yet, though: if this run also changed city coverage versus whatever you're "
+            "comparing it to, that's a confound, not a clean measurement. A controlled "
+            "ablation (identical data, fire on vs. off) is what would isolate its own effect."
+        )
+    else:
+        fire_caveat = (
+            "- **Fire feature:** inactive this run — `nearby_fire_count` was uniformly 0 "
+            "(no `FIRMS_API_KEY` at ingestion time) and had nothing to contribute. Add a "
+            "free FIRMS key and re-ingest to activate it."
+        )
+
     content = f"""# Vaayu AI — Forecast Model Card & Benchmarks
 
 _Generated {meta['created_utc']} by `models/train_forecast_model.py`._
@@ -482,9 +497,7 @@ test rows._
   here is a mild optimism and is documented rather than hidden.
 - **AQI is an approximation** derived from PM2.5/PM10 sub-indices only (no
   NO₂/SO₂/O₃/CO), inherited from the ingestion layer.
-- **Fire feature:** if `fire_feature_active` is false above, `nearby_fire_count`
-  was uniformly 0 (no `FIRMS_API_KEY` at ingestion time) and contributed
-  nothing — expect gains on Delhi's Oct–Nov spikes once FIRMS data is present.
+{fire_caveat}
 - **Coverage:** only cities with sufficient cached/ingested history appear
   above; add the others by completing their AQI backfill and re-running.
 

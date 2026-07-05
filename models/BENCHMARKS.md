@@ -1,6 +1,6 @@
 # Vaayu AI — Forecast Model Card & Benchmarks
 
-_Generated 2026-07-05T01:49:18.837762+00:00 by `models/train_forecast_model.py`._
+_Generated 2026-07-05T02:57:47.239298+00:00 by `models/train_forecast_model.py`._
 
 ## Task
 
@@ -99,9 +99,7 @@ test rows._
   here is a mild optimism and is documented rather than hidden.
 - **AQI is an approximation** derived from PM2.5/PM10 sub-indices only (no
   NO₂/SO₂/O₃/CO), inherited from the ingestion layer.
-- **Fire feature:** if `fire_feature_active` is false above, `nearby_fire_count`
-  was uniformly 0 (no `FIRMS_API_KEY` at ingestion time) and contributed
-  nothing — expect gains on Delhi's Oct–Nov spikes once FIRMS data is present.
+- **Fire feature:** `nearby_fire_count` is genuinely active this run — real NASA FIRMS data, not zeros. Its exact marginal contribution isn't isolated yet, though: if this run also changed city coverage versus whatever you're comparing it to, that's a confound, not a clean measurement. A controlled ablation (identical data, fire on vs. off) is what would isolate its own effect.
 - **Coverage:** only cities with sufficient cached/ingested history appear
   above; add the others by completing their AQI backfill and re-running.
 

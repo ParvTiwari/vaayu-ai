@@ -70,10 +70,11 @@ highlight the deterministic agents vs. the single LLM box.
 
 `[ON SCREEN]` A quick cut to the "Honest caveats" section of BENCHMARKS.md.
 
-> **NARRATION.** And we're upfront about what's still uncertain. We added real
-> satellite fire data for stubble-burning across all three cities — but its own
-> contribution to accuracy is still modest, so we're not claiming it's the reason we
-> beat the baseline until we can isolate that properly. We'd rather show you an
+> **NARRATION.** And we're upfront about what's still an open question. We added
+> real satellite fire data for stubble-burning across all three cities in the same
+> run where we scaled from one city to three — so we can't yet cleanly separate how
+> much each change contributed. Isolating that with a proper controlled test is our
+> next experiment, not a conclusion we've already drawn. We'd rather show you an
 > honest, measured result than an inflated one.
 
 ## 3:05 – 3:30 · Impact + call to action

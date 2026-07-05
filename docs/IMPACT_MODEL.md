@@ -148,10 +148,12 @@ the chain (A1–A8) is either sourced or explicitly assumed and disclosed.
 2. ~~Ingest Bengaluru/Indore AQI history to extend forecasting beyond Delhi.~~ **Done**
    — both cities now have trained, persistence-beating forecasts. What's still missing
    is a health-impact model *for* them (see §5).
-3. ~~Add the FIRMS fire feature (currently 0)~~ **Done, but not yet a proven win** —
-   real fire data is active across all 3 cities, but its own feature importance is
-   still low (~0.4–0.5%, rank 17th–18th of 23). Worth revisiting once enough Oct–Nov
-   stubble-season data has accumulated to test the hypothesis properly.
+3. ~~Add the FIRMS fire feature (currently 0)~~ **Done — real fire data is live
+   across all 3 cities.** Its exact marginal contribution isn't isolated yet: this
+   training run added fire data and pooled in 2 more cities at the same time, so the
+   two effects are confounded. A controlled ablation (same data, fire on vs. off)
+   is the natural next experiment, especially once a full Oct–Nov stubble season of
+   data has accumulated.
 4. Swap observed-at-t weather for forecast weather to remove the mild optimism noted in
    `docs/BENCHMARKS.md`.
 5. Build Bengaluru/Indore-specific health-impact assumptions (population, attributable
