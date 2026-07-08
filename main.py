@@ -29,7 +29,7 @@ from agents.graph import run_pipeline  # noqa: E402
 
 app = FastAPI(
     title="Vaayu AI",
-    description="Urban Air Quality Intelligence — ET AI Hackathon 2026, Problem Statement 5",
+    description="Urban Air Quality Intelligence — ET AI Hackathon 2.0, Problem Statement 5",
     version="0.1.0",
 )
 

@@ -17,7 +17,8 @@ language coverage added.
   2026-07-05.
 - **Baseline:** persistence, `forecast(t+h) = actual(t)`, evaluated on the **same test
   rows** as the model.
-- **Data:** 385,509 hourly feature rows from 46 stations across Delhi, Bengaluru, and
+- **Data:** 385,509 hourly feature rows from 46 of the 47 stations (one excluded for
+  thin history: fewer than 200 hourly observations) across Delhi, Bengaluru, and
   Indore (2016–2026).
 
 | City · Horizon | n (test) | Persistence RMSE | **Model RMSE** | **RMSE ↓** | Persistence MAE | Model MAE |
@@ -74,7 +75,7 @@ on a time-ordered validation tail carved from the training set only.
 
 | Source | Used for | Coverage in this build |
 |---|---|---|
-| **OpenAQ v3** (historical) + **CPCB** `data.gov.in` (live) | AQI | 555,802 rows across 46 stations — Delhi (24), Bengaluru (18), Indore (5), 2016–2026 (AQI capped 0–500) |
+| **OpenAQ v3** (historical) + **CPCB** `data.gov.in` (live) | AQI | 555,802 rows across 47 stations — Delhi (24), Bengaluru (18), Indore (5), 2016–2026 (AQI capped 0–500) |
 | **Open-Meteo** archive | Weather (temp, humidity, wind, precip, boundary-layer height) | 300,349 rows joined within 1h of an AQI reading |
 | **NASA FIRMS** (VIIRS) | Active-fire count within 100 km/station/day | 18,007 station-day rows across all 3 cities (Delhi 10,398 · Bengaluru 5,695 · Indore 1,914). Raw unique detections over the 540-day window: Delhi 21,941 · Bengaluru 37,520 · Indore 52,289 |
 | **OpenStreetMap** / Overpass | Road-density grid, industrial land-use, vulnerability POIs | Delhi 3,543 cells / 382 zones / 3,360 POIs · Bengaluru 1,801 / 1,285 / 4,675 · Indore 1,145 / 51 / 1,524 |

@@ -1,7 +1,7 @@
 """
 LangGraph wiring for the Vaayu AI multi-agent pipeline.
 
-Follows the AgriBloom/Creda pattern: a single StateGraph over a shared typed
+Architecture: a single StateGraph over a shared typed
 state (`CityAirState`), an entry-point router (`orchestrator`), conditional
 routing to the deterministic/ML sub-agents, and a terminal synthesizer
 (`output`) that assembles `final_response` before END.

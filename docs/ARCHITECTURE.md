@@ -3,10 +3,10 @@
 Vaayu AI is a multi-agent urban air-quality intelligence system. A single
 **LangGraph `StateGraph`** (`agents/graph.py`) routes each request through a
 deterministic entry-point orchestrator to one or more sub-agents, then a terminal
-synthesizer assembles a UI-ready response. The design follows the pattern that
-worked for the AgriBloom/Creda hackathon projects: **a shared typed state, a
-keyword router, deterministic (auditable) scoring agents, and one ML agent**, with
-the LLM confined to a narration role and never trusted with a high-stakes decision.
+synthesizer assembles a UI-ready response. The design centers on **a shared typed
+state, a keyword router, deterministic (auditable) scoring agents, and one ML
+agent**, with the LLM confined to a narration role and never trusted with a
+high-stakes decision.
 
 ## The six agents
 
@@ -30,7 +30,7 @@ CPCB guidance — never to compute AQI, scores, rankings, or forecasts.
                         └───────────────┬───────────────┘
                                         │  _route_from_orchestrator (conditional)
         ┌───────────────┬───────────────┼───────────────┬────────────────┐
-        ▼               ▼               ▼               ▼                 │
+        ▼               ▼               ▼               ▼                │
   ┌───────────┐  ┌────────────┐  ┌────────────┐  ┌────────────┐          │
   │ Forecast  │  │Attribution │  │Enforcement │  │  Advisory  │          │
   └─────┬─────┘  └─────┬──────┘  └─────┬──────┘  └─────┬──────┘          │
@@ -40,7 +40,7 @@ CPCB guidance — never to compute AQI, scores, rankings, or forecasts.
         └───────────────┬──────┴───────────────┬───────┴─────────────────┘
                         ▼                       ▼
                   ┌─────────────────────────────────────┐
-                  │             Output Agent             │  final_response
+                  │             Output Agent            │  final_response
                   └──────────────────┬──────────────────┘
                                      ▼
                                    (END)
@@ -110,7 +110,7 @@ heatmap hint) for map rendering.
 ## Error-handling summary
 
 Every external dependency has an explicit degradation path; nothing in the request
-path raises to the caller. (Format modeled on AgriBloom's ARCHITECTURE.md table.)
+path raises to the caller.
 
 | Scenario | Trigger | Handling | User-visible result |
 |---|---|---|---|

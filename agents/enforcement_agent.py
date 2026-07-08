@@ -2,9 +2,9 @@
 Enforcement Agent — DETERMINISTIC, rule-based ranking of monitoring zones by
 enforcement/response priority.
 
-NO LLM is involved in this ranking. Following the AgriBloom/Creda pattern where
-auditable formulae were explicitly favoured over opaque LLM judgment for
-high-stakes recommendations, the priority order here is a pure function of the
+NO LLM is involved in this ranking. Auditable formulae are explicitly favoured
+over opaque LLM judgment for
+high-stakes recommendations, so the priority order here is a pure function of the
 inputs. The LLM's only later role (in the Output Agent) is to *narrate* this
 ranking — never to invent or re-order it.
 

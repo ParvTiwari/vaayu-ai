@@ -1,8 +1,8 @@
 """
 Attribution Agent — DETERMINISTIC, rule-based pollution-source scoring.
 
-NO LLM is involved anywhere in this module. Like AgriBloom's non-LLM
-compliance_agent, source attribution is a decision that must be *auditable*:
+NO LLM is involved anywhere in this module. Source attribution is a decision
+that must be *auditable*:
 a reviewer has to be able to re-derive every number by hand from the same
 inputs. An LLM's plausible-sounding but unverifiable "this is 60% traffic"
 is exactly what we refuse to ship here. Every score below comes from an

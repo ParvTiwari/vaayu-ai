@@ -3,7 +3,7 @@ Orchestrator Agent — the LangGraph entry-point router.
 
 run_orchestrator normalizes the request and decides which downstream agent(s)
 should run. If `query_type` is supplied explicitly it is respected; otherwise a
-simple keyword intent classifier (mirroring AgriBloom's `_detect_intent`) reads
+simple keyword intent classifier reads
 `state["query"]` and picks one of forecast / attribution / enforcement /
 advisory / full. Language is normalized to a 2-letter code (default 'en').
 

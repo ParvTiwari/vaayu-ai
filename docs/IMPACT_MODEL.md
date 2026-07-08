@@ -5,7 +5,7 @@
 > *shape* of the impact and — critically — **which assumptions the result is most
 > sensitive to** (§4), so a reviewer can pressure-test it rather than take it on faith.
 
-## 1. The problem (from the ET AI Hackathon 2026 PS5 brief)
+## 1. The problem (from the ET AI Hackathon 2.0 PS5 brief)
 
 - **~1.67 million premature deaths/year** in India from air pollution.
 - **900+ CAAQMS monitoring stations**, but a CAG audit found **only 31% have

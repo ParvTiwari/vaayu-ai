@@ -5,7 +5,7 @@ data into forecasts, source attribution, enforcement priorities, and multilingua
 citizen advisories — with every high-stakes decision made by an auditable,
 deterministic rule, not a black-box LLM.**
 
-_ET AI Hackathon 2026 · Problem Statement 5 (Urban Air Quality)._
+_ET AI Hackathon 2.0 · Problem Statement 5 (Urban Air Quality)._
 
 India records ~1.67 million premature deaths a year from air pollution, yet a CAG
 audit found only **31% of 900+ CAAQMS stations have actionable response protocols**.
@@ -84,10 +84,11 @@ streamlit run ui/app.py                       # http://localhost:8501
 pytest -q                                     # 55 tests
 ```
 
-**Keys are optional and the system degrades gracefully:** no `OPENAQ_API_KEY` → no
-historical AQI; no `FIRMS_API_KEY` → fire feature is 0; no `LLM_API_KEY` → advisories
-use the deterministic CPCB guidance (still fully localized for Hindi). See the
-error-handling table in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+**Keys are optional and the system degrades gracefully:** no `OPENAQ_API_KEY` → live
+CPCB snapshot only (no historical backfill); no `FIRMS_API_KEY` → the fire signal is
+skipped via its documented fallback; no `LLM_API_KEY` → advisories use the
+deterministic CPCB guidance (still fully localized for Hindi). Every dependency has an
+explicit fallback — see the error-handling table in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Cities & languages supported
 
