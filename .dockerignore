@@ -1,0 +1,17 @@
+# Keep the image small and the build fast. The 1.2 GB ingestion cache and the
+# submission artifacts are NOT needed to serve the demo.
+.git/
+.venv/
+venv/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.env
+dist/
+docs/
+tests/
+
+# Ingestion HTTP cache (1.2 GB) and generated audio — regenerated on demand.
+data/db/raw_cache/
+data/db/advisories/

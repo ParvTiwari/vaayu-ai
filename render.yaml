@@ -1,0 +1,18 @@
+# Render Blueprint — one Docker web service running the full Vaayu AI stack
+# (FastAPI backend + Streamlit UI) in a single container.
+# Deploy: Render Dashboard → New → Blueprint → connect this repo.
+services:
+  - type: web
+    name: vaayu-ai
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    # Streamlit's built-in health endpoint (returns 200 "ok" once the UI is up).
+    healthCheckPath: /_stcore/health
+    envVars:
+      # The UI talks to the backend over the container's loopback.
+      - key: VAAYU_API_URL
+        value: http://127.0.0.1:8000
+      # Optional: add LLM_API_KEY in the Render dashboard (Environment tab) to
+      # enable live LLM localization. Without it, the deterministic CPCB
+      # advisory (Hindi included) is used.
