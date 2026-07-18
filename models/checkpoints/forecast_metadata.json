@@ -1,0 +1,275 @@
+{
+  "created_utc": "2026-07-05T02:57:47.239298+00:00",
+  "model_type": "XGBoostRegressor",
+  "design": "one model per horizon, pooled across cities (city one-hot + lat/lon)",
+  "horizons_hours": [
+    24,
+    48,
+    72
+  ],
+  "target": "aqi (approximate Indian AQI from PM2.5/PM10 sub-indices)",
+  "feature_columns": [
+    "aqi_current",
+    "aqi_lag_1h",
+    "aqi_lag_24h",
+    "aqi_lag_48h",
+    "aqi_roll_6h",
+    "aqi_roll_24h",
+    "temperature_2m",
+    "relative_humidity_2m",
+    "wind_speed_10m",
+    "precipitation",
+    "boundary_layer_height",
+    "wind_dir_sin",
+    "wind_dir_cos",
+    "nearby_fire_count",
+    "hour",
+    "day_of_week",
+    "month",
+    "is_winter_pollution_season",
+    "lat",
+    "lon",
+    "city_Bengaluru",
+    "city_Delhi",
+    "city_Indore"
+  ],
+  "weather_features": [
+    "temperature_2m",
+    "relative_humidity_2m",
+    "wind_speed_10m",
+    "precipitation",
+    "boundary_layer_height"
+  ],
+  "fire_feature_active": true,
+  "xgb_params": {
+    "n_estimators": 600,
+    "max_depth": 6,
+    "learning_rate": 0.03,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "min_child_weight": 5,
+    "reg_lambda": 1.0,
+    "objective": "reg:squarederror",
+    "eval_metric": "rmse",
+    "early_stopping_rounds": 40,
+    "n_jobs": 4,
+    "random_state": 42
+  },
+  "test_fraction_recent_per_city": 0.15,
+  "training_date_range": {
+    "start": "2016-01-29T23:30:00+00:00",
+    "end": "2026-07-04T21:30:00+00:00",
+    "train_end_per_city": {
+      "Bengaluru": "2026-04-06T05:30:00+00:00",
+      "Delhi": "2025-12-22T05:30:00+00:00",
+      "Indore": "2026-04-22T13:30:00+00:00"
+    }
+  },
+  "cities": [
+    "Bengaluru",
+    "Delhi",
+    "Indore"
+  ],
+  "n_feature_rows": 385509,
+  "n_stations": 46,
+  "metrics": {
+    "Bengaluru": {
+      "24h": {
+        "n_test": 16813,
+        "model_rmse": 35.86,
+        "model_mae": 17.86,
+        "persistence_rmse": 44.78,
+        "persistence_mae": 18.53,
+        "rmse_reduction_pct": 19.9,
+        "beats_persistence": true
+      },
+      "48h": {
+        "n_test": 16009,
+        "model_rmse": 36.28,
+        "model_mae": 20.59,
+        "persistence_rmse": 44.9,
+        "persistence_mae": 20.73,
+        "rmse_reduction_pct": 19.2,
+        "beats_persistence": true
+      },
+      "72h": {
+        "n_test": 15409,
+        "model_rmse": 37.22,
+        "model_mae": 22.22,
+        "persistence_rmse": 46.64,
+        "persistence_mae": 22.96,
+        "rmse_reduction_pct": 20.2,
+        "beats_persistence": true
+      }
+    },
+    "Delhi": {
+      "24h": {
+        "n_test": 28847,
+        "model_rmse": 87.56,
+        "model_mae": 65.17,
+        "persistence_rmse": 109.49,
+        "persistence_mae": 77.13,
+        "rmse_reduction_pct": 20.0,
+        "beats_persistence": true
+      },
+      "48h": {
+        "n_test": 28051,
+        "model_rmse": 91.63,
+        "model_mae": 69.19,
+        "persistence_rmse": 118.28,
+        "persistence_mae": 86.0,
+        "rmse_reduction_pct": 22.5,
+        "beats_persistence": true
+      },
+      "72h": {
+        "n_test": 27402,
+        "model_rmse": 94.25,
+        "model_mae": 71.26,
+        "persistence_rmse": 118.95,
+        "persistence_mae": 87.27,
+        "rmse_reduction_pct": 20.8,
+        "beats_persistence": true
+      }
+    },
+    "Indore": {
+      "24h": {
+        "n_test": 5820,
+        "model_rmse": 26.35,
+        "model_mae": 16.24,
+        "persistence_rmse": 31.87,
+        "persistence_mae": 16.93,
+        "rmse_reduction_pct": 17.3,
+        "beats_persistence": true
+      },
+      "48h": {
+        "n_test": 5500,
+        "model_rmse": 27.41,
+        "model_mae": 17.51,
+        "persistence_rmse": 34.13,
+        "persistence_mae": 19.21,
+        "rmse_reduction_pct": 19.7,
+        "beats_persistence": true
+      },
+      "72h": {
+        "n_test": 5452,
+        "model_rmse": 28.19,
+        "model_mae": 18.46,
+        "persistence_rmse": 34.58,
+        "persistence_mae": 19.79,
+        "rmse_reduction_pct": 18.5,
+        "beats_persistence": true
+      }
+    },
+    "ALL": {
+      "24h": {
+        "n_test": 51480,
+        "model_rmse": 69.25,
+        "model_mae": 44.19,
+        "persistence_rmse": 86.53,
+        "persistence_mae": 51.18,
+        "rmse_reduction_pct": 20.0,
+        "beats_persistence": true
+      },
+      "48h": {
+        "n_test": 49560,
+        "model_rmse": 72.53,
+        "model_mae": 47.75,
+        "persistence_rmse": 93.27,
+        "persistence_mae": 57.51,
+        "rmse_reduction_pct": 22.2,
+        "beats_persistence": true
+      },
+      "72h": {
+        "n_test": 48263,
+        "model_rmse": 74.67,
+        "model_mae": 49.64,
+        "persistence_rmse": 94.14,
+        "persistence_mae": 59.11,
+        "rmse_reduction_pct": 20.7,
+        "beats_persistence": true
+      }
+    }
+  },
+  "feature_importance_by_horizon": {
+    "24": {
+      "aqi_current": 0.63123,
+      "aqi_roll_24h": 0.13749,
+      "aqi_lag_1h": 0.04229,
+      "is_winter_pollution_season": 0.04032,
+      "aqi_roll_6h": 0.03713,
+      "city_Delhi": 0.019,
+      "aqi_lag_48h": 0.01174,
+      "aqi_lag_24h": 0.01046,
+      "month": 0.01039,
+      "lat": 0.00626,
+      "boundary_layer_height": 0.00602,
+      "relative_humidity_2m": 0.00587,
+      "hour": 0.00584,
+      "wind_dir_sin": 0.00577,
+      "temperature_2m": 0.00544,
+      "lon": 0.00484,
+      "wind_speed_10m": 0.00418,
+      "nearby_fire_count": 0.00412,
+      "wind_dir_cos": 0.00386,
+      "day_of_week": 0.00333,
+      "precipitation": 0.00225,
+      "city_Indore": 0.00217,
+      "city_Bengaluru": 0.0
+    },
+    "48": {
+      "aqi_current": 0.55731,
+      "aqi_roll_24h": 0.16586,
+      "is_winter_pollution_season": 0.06531,
+      "aqi_lag_1h": 0.03279,
+      "aqi_roll_6h": 0.02894,
+      "city_Delhi": 0.02679,
+      "aqi_lag_48h": 0.01676,
+      "month": 0.01638,
+      "aqi_lag_24h": 0.01348,
+      "lat": 0.0099,
+      "hour": 0.0078,
+      "temperature_2m": 0.00719,
+      "lon": 0.007,
+      "boundary_layer_height": 0.00637,
+      "relative_humidity_2m": 0.0063,
+      "wind_dir_sin": 0.00625,
+      "city_Indore": 0.0049,
+      "nearby_fire_count": 0.00476,
+      "day_of_week": 0.00474,
+      "wind_dir_cos": 0.00392,
+      "precipitation": 0.00376,
+      "wind_speed_10m": 0.00349,
+      "city_Bengaluru": 0.0
+    },
+    "72": {
+      "aqi_current": 0.53389,
+      "aqi_roll_24h": 0.14591,
+      "is_winter_pollution_season": 0.10198,
+      "city_Delhi": 0.03556,
+      "aqi_roll_6h": 0.0271,
+      "aqi_lag_48h": 0.02016,
+      "month": 0.01967,
+      "aqi_lag_1h": 0.01832,
+      "aqi_lag_24h": 0.01323,
+      "lat": 0.01082,
+      "wind_dir_sin": 0.00954,
+      "hour": 0.00887,
+      "boundary_layer_height": 0.00775,
+      "relative_humidity_2m": 0.00708,
+      "lon": 0.00688,
+      "temperature_2m": 0.00658,
+      "nearby_fire_count": 0.00498,
+      "day_of_week": 0.00433,
+      "wind_speed_10m": 0.00425,
+      "city_Indore": 0.00412,
+      "city_Bengaluru": 0.00369,
+      "wind_dir_cos": 0.00305,
+      "precipitation": 0.00226
+    }
+  },
+  "checkpoints": {
+    "24h": "forecast_24h.json",
+    "48h": "forecast_48h.json",
+    "72h": "forecast_72h.json"
+  }
+}
